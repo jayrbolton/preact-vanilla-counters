@@ -67,9 +67,7 @@ class CounterList extends Component {
   }
 
   render() {
-    console.log('props', this.props);
     const { counters, totalCount } = this.props;
-    console.log('counters', counters, Array.from(counters));
     return (
       <div>
         <p>Total count is {totalCount}</p>
