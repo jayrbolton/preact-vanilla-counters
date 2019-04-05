@@ -10,12 +10,8 @@ class Counter extends Component {
 
   // Increment the counter
   increment () {
-    if (!this.props.handleUpdate) return;
-    // Increment the counter state
-    this.props.handleUpdate(state => {
-      state.count += 1;
-      return state;
-    });
+    const count = this.props.count + 1;
+    this.props.update({ count })
   }
 
   render() {
@@ -35,35 +31,23 @@ class CounterList extends Component {
   }
 
   addCounter() {
-    if (!this.props.handleUpdate) return;
-    // Add a new counter to the Map
-    this.props.handleUpdate(state => {
-      const { counters } = state;
-      counters.set(genId(), Counter.createState(0));
-      return Object.assign(state, { counters });
-    })
+    const { counters } = this.props;
+    counters.set(genId(), Counter.createState(0));
+    this.props.update(Object.assign(this.props, { counters }));
   }
 
   removeCounter(id) {
-    if (!this.props.handleUpdate) return;
-    // Remove a counter given an ID
-    this.props.handleUpdate(state => {
-      const { counters } = state;
-      counters.delete(id);
-      const totalCount = getTotal(counters);
-      return {counters, totalCount};
-    })
+    const { counters } = this.props;
+    counters.delete(id);
+    const totalCount = getTotal(counters);
+    this.props.update({counters, totalCount});
   }
 
-  updateCounter(id, update) {
-    if (!this.props.handleUpdate) return;
-    // Update a single counter's state
-    this.props.handleUpdate(state => {
-      const { counters } = state;
-      counters.set(id, update(counters.get(id)));
-      const totalCount = getTotal(counters);
-      return { counters, totalCount }
-    });
+  updateCounter(id, newCounter) {
+    const { counters } = this.props;
+    counters.set(id, newCounter);
+    const totalCount = getTotal(counters);
+    this.props.update({counters, totalCount})
   }
 
   render() {
@@ -76,7 +60,8 @@ class CounterList extends Component {
           Array.from(counters).map(([id, counter]) => {
             return (
               <div>
-                <Counter count={counter.count} handleUpdate={(up) => this.updateCounter(id, up)} />
+                <Counter count={counter.count} update={state => this.updateCounter(id, state)} />
+                { /*<Counter count={counter.count} handleUpdate={(up) => this.updateCounter(id, up)} />*/}
                 <button onClick={() => this.removeCounter(id)}>Remove counter</button>
               </div>
             );
@@ -91,16 +76,20 @@ class CounterList extends Component {
 class Page extends Component {
   constructor() {
     super();
-    this.state = CounterList.createState();
-    this.updateCounterList = this.updateCounterList.bind(this);
+    this.state = {
+      counterList: CounterList.createState()
+    };
   }
-  updateCounterList(handleUpdate) {
+  updateCounterList(newCounterList) {
     // Update our state based on any state updates from the counterList
-    this.setState(Object.assign(this.state, handleUpdate(this.state)));
+    this.setState({
+      counterList: newCounterList
+    })
   }
   render() {
+    const { counterList } = this.state;
     return (
-      <CounterList {...this.state} handleUpdate={this.updateCounterList} />
+      <CounterList {...counterList} update={state => this.updateCounterList(state)} />
     );
   }
 };
